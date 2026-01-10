@@ -16,7 +16,7 @@ export default function Home() {
     if(user && isLoaded){
       createOrUpdateUser({
         clerkId:user.id,
-        name:user.fullName || user.firstName || user.lastName || "",
+        name:user.fullName || user.firstName || user.lastName || "Anonmyous",
         email:user.primaryEmailAddress?.emailAddress || "",
         imageUrl:user.imageUrl || "",
       });
