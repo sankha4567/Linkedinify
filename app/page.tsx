@@ -1,15 +1,17 @@
 "use client";
 import Navbar from "@/components/Navbar";
-import { useUser } from "@clerk/nextjs";
+import { useUser,useAuth } from "@clerk/nextjs";
 import {useQuery,useMutation} from "convex/react";
 import {api} from "@/convex/_generated/api";
 import {useState,useEffect} from "react";
 import PostCard from "@/components/PostCard";
 import PostForm from "@/components/PostForm";
 import FeedTabs from "@/components/FeedTabs";
-
+import { useRouter } from "next/navigation";
 export default function Home() {
   const {user,isLoaded}=useUser();
+  const {isSignedIn}=useAuth();
+  const router=useRouter();
   const [activeTab,setActiveTab]=useState<"forYou" | "following">("forYou");
   const createOrUpdateUser=useMutation(api.users.createOrUpdateUser);
   useEffect(()=>{
@@ -22,15 +24,29 @@ export default function Home() {
       });
     }
   }, [user, isLoaded, createOrUpdateUser]);
+  useEffect(()=>{
+    if(isLoaded && !isSignedIn){
+      router.push("/sign-in");
+    }
+  }, [isLoaded, isSignedIn]);
 const forYouPosts=useQuery(api.posts.getFeedPosts);
 const followingPosts=useQuery(api.posts.getFollowingFeed,user ? {clerkId:user.id} : "skip");
 const posts=activeTab == "forYou" ? forYouPosts : followingPosts;
 if(!isLoaded){
   return (
     <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
   )
+}
+
+// Show loading while redirecting
+if (!isSignedIn) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
 }
   return (
     <div className="min-h-screen bg-gray-50">
