@@ -89,7 +89,7 @@ describe("posts.getFollowingFeed", () => {
 
   it("returns posts from followed users only — not your own", async () => {
     const t = convexTest(schema);
-    const aliceId = await seedUser(t, "alice", "Alice");
+    await seedUser(t, "alice", "Alice");
     const bobId = await seedUser(t, "bob", "Bob");
 
     const asAlice = t.withIdentity({ subject: "alice" });
