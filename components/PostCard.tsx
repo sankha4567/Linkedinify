@@ -1,70 +1,87 @@
-import React from 'react';
-import { Id } from '@/convex/_generated/dataModel';
-import Link from 'next/link';
-import LikeButton from '@/components/LikeButton';
-import { getTimeAgo } from '@/lib/utils';
- interface PostCardProps {
-   _id:Id<"posts">,
-   userId:Id<"users">,
-   text:string,
-   imageUrl?:string,
-   tags?:string[],
-   createdAt:number,
-   authorName:string,
-   authorUsername:string,
-   authorImage:string,
-   likesCount:number,
-   commentsCount:number,
+import { Id } from "@/convex/_generated/dataModel";
+import Link from "next/link";
+import LikeButton from "@/components/LikeButton";
+import Markdown from "@/components/Markdown";
+import { getTimeAgo } from "@/lib/utils";
 
-
- }
-
-const PostCard = ({post}:{post:PostCardProps}) => {
-  const timeAgo=getTimeAgo(post.createdAt)
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
-      <div className="flex gap-3 mb-3">
-        <Link href={`/profile/${post.userId}`}>
-        <img src={post.authorImage} alt={post.authorName} className="w-10 h-10  hover:opacity-80 transition" />
-        </Link>
-        <div className='flex-1'>
-           <Link href={`/profile/${post.userId}`}>
-           <span className="font-semibold text-gray-800 hover:underline">{post.authorName}</span>
-          </Link>
-          <p className='text-sm text-gray-500'>@{post.authorUsername} . {timeAgo}</p>
-        </div>
-
-      </div>
-      <Link href={`/post/${post._id}`}>
-      <p className="text-gray-800 mb-3 whitespace-pre-wrap">{post.text}</p>
-      </Link>
-      {
-        post.imageUrl && (
-          <Link href={`/post/${post._id}`}>
-            <img src={post.imageUrl} alt="Post Image" className="w-full max-h-96 object-cover hover:opacity-95 transition" />
-           </Link>
-        )
-      }
-      {
-        post.tags && post.tags.length > 0 && (
-          <div className='flex flex-wrap gap-2 mb-3'>
-            {
-            post.tags.map((tag,index)=><span key={index} className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-medium">#{tag}</span>)
-          }
-            </div>
-        )
-      }
-      <div className='flex items-center gap-6 pt-3 border-t'>
-        <LikeButton postId={post._id} initialCount={post.likesCount}/>
-        <Link href={`/post/${post._id}`} className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <span className="text-sm">{post.commentsCount}</span>
-        </Link>
-      </div>
-    </div>
-  )
+interface PostCardProps {
+  _id: Id<"posts">;
+  userId: Id<"users">;
+  text: string;
+  imageUrl?: string;
+  tags?: string[];
+  createdAt: number;
+  authorName: string;
+  authorUsername: string;
+  authorImage: string;
+  likesCount: number;
+  commentsCount: number;
 }
 
-export default PostCard;
+export default function PostCard({ post }: { post: PostCardProps }) {
+  const timeAgo = getTimeAgo(post.createdAt);
+  return (
+    <article className="bg-card border border-border rounded-2xl p-4 sm:p-5 hover:border-foreground/20 hover:shadow-md transition animate-fade-in">
+      <div className="flex items-start gap-3 mb-3">
+        <Link href={`/profile/${post.userId}`} className="flex-shrink-0">
+          <img
+            src={post.authorImage || "/default-avatar.png"}
+            alt={post.authorName}
+            className="w-11 h-11 rounded-full object-cover ring-2 ring-border hover:ring-primary/40 transition"
+          />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Link href={`/profile/${post.userId}`} className="font-semibold text-foreground hover:underline truncate">
+              {post.authorName}
+            </Link>
+            <span className="text-muted-foreground text-sm truncate">@{post.authorUsername}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">{timeAgo}</p>
+        </div>
+      </div>
+
+      <Link href={`/post/${post._id}`} className="block mb-3">
+        <Markdown>{post.text}</Markdown>
+      </Link>
+
+      {post.imageUrl && (
+        <Link href={`/post/${post._id}`} className="block mb-3">
+          <div className="rounded-xl overflow-hidden border border-border">
+            <img
+              src={post.imageUrl}
+              alt="Post"
+              className="w-full max-h-[28rem] object-cover hover:scale-[1.01] transition"
+            />
+          </div>
+        </Link>
+      )}
+
+      {post.tags && post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {post.tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 px-2.5 py-1 rounded-md transition-colors"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-1 pt-3 border-t border-border">
+        <LikeButton postId={post._id} initialCount={post.likesCount} />
+        <Link
+          href={`/post/${post._id}`}
+          className="flex items-center gap-2 px-3 h-9 rounded-full text-sm text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span className="font-medium">{post.commentsCount}</span>
+        </Link>
+      </div>
+    </article>
+  );
+}

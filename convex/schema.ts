@@ -45,9 +45,12 @@ export default defineSchema({
     postId: v.id("posts"),
     text: v.string(),
     createdAt: v.number(),
+    parentCommentId: v.optional(v.id("comments")),
+    editedAt: v.optional(v.number()),
   })
     .index("by_post", ["postId"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_parent", ["parentCommentId"]),
 
   // Follows table - stores who follows whom
   follows: defineTable({

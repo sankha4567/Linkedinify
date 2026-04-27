@@ -4,12 +4,14 @@ import { v } from "convex/values";
 export const toggleLike = mutation({
   args: {
     postId: v.id("posts"),
-    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!user) throw new Error("User not found");
@@ -36,12 +38,14 @@ export const toggleLike = mutation({
 export const hasLiked = query({
   args: {
     postId: v.id("posts"),
-    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return false;
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!user) return false;

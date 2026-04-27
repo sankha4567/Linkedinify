@@ -3,15 +3,18 @@ import { v } from "convex/values";
 
 export const createOrUpdateUser = mutation({
   args: {
-    clerkId: v.string(),
     name: v.string(),
     email: v.string(),
     imageUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const clerkId = identity.subject;
+
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
       .first();
 
     if (existingUser) {
@@ -24,9 +27,9 @@ export const createOrUpdateUser = mutation({
     } else {
       const username = args.name.toLowerCase().replace(/\s+/g, "") + Math.floor(Math.random() * 1000);
       const userId = await ctx.db.insert("users", {
-        clerkId: args.clerkId,
+        clerkId,
         name: args.name,
-        username: username,
+        username,
         email: args.email,
         imageUrl: args.imageUrl,
         bio: "",
@@ -41,11 +44,13 @@ export const createOrUpdateUser = mutation({
 });
 
 export const getCurrentUser = query({
-  args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
     return await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
   },
 });
@@ -69,7 +74,6 @@ export const getUserByUsername = query({
 
 export const updateProfile = mutation({
   args: {
-    clerkId: v.string(),
     name: v.string(),
     username: v.string(),
     bio: v.optional(v.string()),
@@ -78,9 +82,12 @@ export const updateProfile = mutation({
     skills: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!user) throw new Error("User not found");

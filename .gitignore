@@ -65,3 +65,6 @@ logs
 
 # Convex
 .convex/
+
+# Claude Code local cache (may contain credentials/transcripts)
+.claude/

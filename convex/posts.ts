@@ -3,15 +3,17 @@ import { v } from "convex/values";
 
 export const createPost = mutation({
   args: {
-    clerkId: v.string(),
     text: v.string(),
     imageStorageId: v.optional(v.id("_storage")),
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!user) throw new Error("User not found");
@@ -66,11 +68,14 @@ export const getFeedPosts = query({
 });
 
 export const getFollowingFeed = query({
-  args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
     const currentUser = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!currentUser) return [];
@@ -81,7 +86,7 @@ export const getFollowingFeed = query({
       .collect();
 
     const followingIds = following.map((f) => f.followingId);
-    followingIds.push(currentUser._id);
+    if (followingIds.length === 0) return [];
 
     const allPosts = await ctx.db.query("posts").order("desc").take(100);
     const filteredPosts = allPosts.filter((post) => followingIds.includes(post.userId));
@@ -180,12 +185,14 @@ export const getPost = query({
 export const deletePost = mutation({
   args: {
     postId: v.id("posts"),
-    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .first();
 
     if (!user) throw new Error("User not found");
