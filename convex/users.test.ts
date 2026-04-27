@@ -62,19 +62,30 @@ describe("users.createOrUpdateUser", () => {
     expect(stored?.username).toMatch(/^alice/);
   });
 
-  it("updates name/email/imageUrl on a subsequent call instead of creating a duplicate", async () => {
+  it("updates name and email on a subsequent call, but preserves the user's customised imageUrl", async () => {
     const t = convexTest(schema);
     const asAlice = t.withIdentity({ subject: "clerk_alice" });
 
     await asAlice.mutation(api.users.createOrUpdateUser, {
       name: "Alice",
       email: "old@example.com",
-      imageUrl: "old.png",
+      imageUrl: "clerk-default.png",
     });
+
+    // Simulate the user setting a custom photo via Edit Profile
+    await t.run(async (ctx) => {
+      const u = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", "clerk_alice"))
+        .first();
+      if (u) await ctx.db.patch(u._id, { imageUrl: "user-uploaded.png" });
+    });
+
+    // Subsequent page load syncs name/email but must not clobber imageUrl
     await asAlice.mutation(api.users.createOrUpdateUser, {
       name: "Alice Smith",
       email: "new@example.com",
-      imageUrl: "new.png",
+      imageUrl: "clerk-default-2.png",
     });
 
     const all = await t.run(async (ctx) =>
@@ -87,7 +98,7 @@ describe("users.createOrUpdateUser", () => {
     expect(all).toHaveLength(1);
     expect(all[0].name).toBe("Alice Smith");
     expect(all[0].email).toBe("new@example.com");
-    expect(all[0].imageUrl).toBe("new.png");
+    expect(all[0].imageUrl).toBe("user-uploaded.png");
   });
 });
 

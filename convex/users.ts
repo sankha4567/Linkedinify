@@ -18,10 +18,12 @@ export const createOrUpdateUser = mutation({
       .first();
 
     if (existingUser) {
+      // Don't overwrite imageUrl — the user owns it via Edit Profile (custom
+      // upload to Convex storage) and we don't want every page-load sync from
+      // Clerk to clobber their choice.
       await ctx.db.patch(existingUser._id, {
         name: args.name,
         email: args.email,
-        imageUrl: args.imageUrl,
       });
       return existingUser._id;
     } else {
@@ -111,6 +113,26 @@ export const updateProfile = mutation({
     });
 
     return user._id;
+  },
+});
+
+export const updateProfileImage = mutation({
+  args: { imageStorageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    if (!user) throw new Error("User not found");
+
+    const url = await ctx.storage.getUrl(args.imageStorageId);
+    if (!url) throw new Error("Failed to resolve uploaded image");
+
+    await ctx.db.patch(user._id, { imageUrl: url });
+    return url;
   },
 });
 

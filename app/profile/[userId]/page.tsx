@@ -22,7 +22,7 @@ export default function ProfilePage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Posts {posts && <span className="text-muted-foreground font-normal">({posts.length})</span>}
+              Posts
             </h2>
           </div>
 

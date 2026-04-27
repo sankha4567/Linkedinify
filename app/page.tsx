@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "@/components/Navbar";
 import { useUser, useAuth } from "@clerk/nextjs";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
 import PostCard from "@/components/PostCard";
@@ -12,19 +12,22 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const { user, isLoaded } = useUser();
   const { isSignedIn } = useAuth();
+  const { isAuthenticated } = useConvexAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"forYou" | "following">("forYou");
   const createOrUpdateUser = useMutation(api.users.createOrUpdateUser);
 
   useEffect(() => {
-    if (user && isLoaded) {
-      createOrUpdateUser({
-        name: user.fullName || user.firstName || user.lastName || "Anonymous",
-        email: user.primaryEmailAddress?.emailAddress || "",
-        imageUrl: user.imageUrl || "",
-      });
-    }
-  }, [user, isLoaded, createOrUpdateUser]);
+    // Wait for Convex to confirm the auth token is valid before mutating —
+    // useUser() can briefly report a user during sign-out transitions while
+    // the Convex JWT is already gone, which produces "Not authenticated" noise.
+    if (!isAuthenticated || !user) return;
+    createOrUpdateUser({
+      name: user.fullName || user.firstName || user.lastName || "Anonymous",
+      email: user.primaryEmailAddress?.emailAddress || "",
+      imageUrl: user.imageUrl || "",
+    }).catch(() => {});
+  }, [isAuthenticated, user, createOrUpdateUser]);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) router.push("/sign-in");

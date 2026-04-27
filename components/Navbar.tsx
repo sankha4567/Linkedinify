@@ -62,7 +62,7 @@ export default function Navbar() {
           </Link>
           <ThemeToggle />
           <UserButton
-            afterSignOutUrl="/"
+            afterSignOutUrl="/sign-in"
             appearance={{
               elements: {
                 avatarBox: "h-9 w-9 ring-2 ring-border hover:ring-primary/40 transition-all",

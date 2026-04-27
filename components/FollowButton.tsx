@@ -13,6 +13,7 @@ interface Props {
 export default function FollowButton({ targetUserId }: Props) {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const isFollowing = useQuery(api.follows.isFollowing, user ? { targetUserId } : "skip");
   const currentUser = useQuery(api.users.getCurrentUser, user ? {} : "skip");
   const toggleFollow = useMutation(api.follows.toggleFollow);
@@ -35,13 +36,23 @@ export default function FollowButton({ targetUserId }: Props) {
     <button
       disabled={isLoading || !user}
       onClick={handleFollow}
-      className={`px-5 h-9 rounded-full text-sm font-semibold transition active:scale-95 disabled:opacity-50 ${
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={`px-5 h-9 rounded-full text-sm font-semibold transition active:scale-95 disabled:opacity-50 shadow-sm ${
         isFollowing
-          ? "bg-muted text-foreground border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-          : "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"
+          ? hovered
+            ? "bg-destructive/10 text-destructive border border-destructive/40 backdrop-blur-md"
+            : "bg-white/15 text-white border border-white/30 backdrop-blur-md"
+          : "bg-white text-foreground hover:bg-white/90 border border-white/20"
       }`}
     >
-      {isLoading ? "…" : isFollowing ? "Following" : "Follow"}
+      {isLoading
+        ? "…"
+        : isFollowing
+        ? hovered
+          ? "Unfollow"
+          : "Following"
+        : "Follow"}
     </button>
   );
 }
