@@ -1,5 +1,7 @@
 # Linkedinify
 
+[![CI](https://github.com/sankha4567/Linkedinify/actions/workflows/ci.yml/badge.svg)](https://github.com/sankha4567/Linkedinify/actions/workflows/ci.yml)
+
 A LinkedIn-style social networking web app built with **Next.js 16**, **Convex** (realtime backend & database), **Clerk** (auth), and **Tailwind CSS v4**. Users can sign in, create text / image posts, like, comment, follow other users, and browse profiles.
 
 ---
